@@ -1,0 +1,93 @@
+// calculate font size in to REM
+// if there's a font size parsed in then use that, if not, then fall back to 1.6 ( 16px )
+// usage @include font-size(1.2, !important)
+@mixin font-size($sizeValue : 1.6, $important: null) {
+  // IE falls back to px
+  font-size: ($sizeValue * 10) + px $important;
+  // modern browsers use rem.
+  font-size: $sizeValue + rem $important;
+}
+
+// SVG Background images
+// USAGE: @include svgWithFallback( imageNameNoExtension );
+@mixin svgWithFallback( $imageName ) {
+  background-image: url('../images/svg/#{$imageName}.png');
+  background-image: none, url('../images/svg/#{$imageName}.svg');
+}
+
+// clearRowToNewLine - parse in number of iterms per row and clear the next row :)
+@mixin clearRowToNewLine($numPerRow) {
+  &:nth-child(#{$numPerRow}n+1) {
+    clear: left;
+  }
+}
+
+// Cross browser opacity
+@mixin opacity($opacity) {
+  opacity: $opacity;
+  $opacity-ie: $opacity * 100;
+  filter: alpha(opacity=$opacity-ie); //IE8
+}
+// usage
+// .element {
+//   @include opacity(0.8);
+// }
+
+// prefix transform for animations
+// USAGE: @include madeTransform(translateZ(0));
+@mixin Transform ( $property : all ) {
+  -webkit-transform: $property;
+  -moz-transform: $property;
+  -ms-transform: $property;
+  -o-transform: $property;
+  transform: $property;
+}
+
+@mixin TransformOrigin ( $value : 0 0 ) {
+  -webkit-transform-origin: $value;
+  -moz-transform-origin: $value;
+  -ms-transform-origin: $value;
+  -o-transform-origin: $value;
+  transform-origin: $value;
+}
+
+// madeTransition mixin
+@function prefix($property, $prefixes: (webkit moz o ms)) {
+  $vendor-prefixed-properties: transform background-clip background-size;
+  $result: ();
+  @each $prefix in $prefixes {
+   @if index($vendor-prefixed-properties, $property) {
+     $property: -#{$prefix}-#{$property}
+   }
+   $result: append($result, $property);
+  }
+  @return $result;
+}
+@function trans-prefix($transition, $prefix: moz) {
+  $prefixed: ();
+  @each $trans in $transition {
+    $prop-name: nth($trans, 1);
+    $vendor-prop-name: prefix($prop-name, $prefix);
+    $prop-vals: nth($trans, 2);
+    $prefixed: append($prefixed, ($vendor-prop-name $prop-vals), comma);
+  }
+  @return $prefixed;
+}
+@mixin Transition( $values...) {
+  $transitions: ();
+  @each $declaration in $values {
+    $prop: nth($declaration, 1);
+    $prop-opts: ();
+    $length: length($declaration);
+    @for $i from 1 through $length {
+      $prop-opts: append($prop-opts, nth($declaration, $i));
+    }
+    $trans: ($prop, $prop-opts);
+    $transitions: append($transitions, $trans, comma);
+  }
+  -webkit-transition: trans-prefix($transitions, webkit);
+  -moz-transition: trans-prefix($transitions, moz);
+  -ms-transition: trans-prefix($transitions, ms);
+  -o-transition: trans-prefix($transitions, o);
+  transition: $values;
+}
